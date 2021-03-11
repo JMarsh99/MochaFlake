@@ -1,3 +1,6 @@
+// entry point for the program
+// run all mocha flake with given options and CL params
+
 let inquirer = require('inquirer'),
   path = require('path'),
   fs = require('fs-extra');
@@ -58,13 +61,20 @@ inquirer.prompt(
   }
 });
 
-
+/**
+* Centrally runs all the features of Mocha Flake
+* -> get the node diff
+* -> run Mocha programmatically
+* -> get the runTrace of the program
+*
+* @param{Object} options options that Mocha Flake was run with
+*/
 async function runMochaFlake(options) {
 
   // create file if doesn't already exist
   await fs.ensureFile(resultsFilePath);
 
-  // let repoDiff = await findNodeDiff(options);
+  let repoDiff = await findNodeDiff(options);
   await runTesting(options);
   // let runTrace = await findRunTrace();
   // findDiffTests(repoDiff, runTrace);

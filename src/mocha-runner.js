@@ -1,14 +1,21 @@
+// run Mocha programmatically with options
+// and custom reporter required
+
 let Mocha = require('mocha'),
   fs = require('fs-extra'),
   path = require('path');
 
 let resultsFilePath =  '../results/traceResults.txt';
 
-// run mocha programmatically
-// this is a bit of a large function but required for all Mocha options needed
+
+/**
+* runs Mocha programmatically
+* @param{Object} options options for Mocha Flake
+*/
 module.exports = async function runTesting(options) {
 
   var mocha = new Mocha();
+  // custom reporter that returns JSON to a specific file
   mocha.reporter('./mocha-json-file-reporter.js');
 
   let testDir = options['testDir'];
@@ -34,6 +41,7 @@ module.exports = async function runTesting(options) {
 
   mocha.suite.beforeAll(function () {
     // TODO: make this non-blocking
+    // maybe use different flag writestream?
     fs.writeFileSync('../results/traceResults.txt', '');
     // shuffle suites if in options
     if (options['shuffled']) {
@@ -55,12 +63,18 @@ module.exports = async function runTesting(options) {
 
   // Run the tests
   mocha.run(function(failures) {
-    process.exitCode = failures ? 1 : 0;  // exit with non-zero status if there were failures
+    // exit with non-zero status if there were failures
+    process.exitCode = failures ? 1 : 0;
   });
 }
 
-// https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-// shuffle array by randomly switching indexes
+/**
+* from:
+* https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+* Implementation of Durstenfeld shuffle
+*
+* @param{Array} array array to be shuffled
+*/
 function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
