@@ -6,13 +6,26 @@ let Mocha = require('mocha'),
   path = require('path');
 
 let resultsFilePath =  '../results/traceResults.txt';
-
+let TestFormatter = require('./njstrace-formatter');
 
 /**
 * runs Mocha programmatically
 * @param{Object} options options for Mocha Flake
 */
 module.exports = async function runTesting(options) {
+
+  // find relative path to repo tested
+  rel = path.relative(process.cwd(), options['repoDir']);
+
+  // get glob patten for relative repo
+  var alljs = path.join(rel, '**', '*.js');
+  var noNodeMods = '!' + path.join(rel, '**', 'node_modules', '**');
+  // inject njstrace to get trace info
+  // results in ../results/traceResults.txt
+  var njstrace = require('njstrace').inject({
+    formatter: new TestFormatter(options['testDir']),
+    files: [alljs, noNodeMods]
+  })
 
   var mocha = new Mocha();
   // custom reporter that returns JSON to a specific file
