@@ -6,8 +6,9 @@ let inquirer = require('inquirer'),
   fs = require('fs-extra');
 
 let runTesting = require('./mocha-runner.js');
-let findNodeDiff = require('./nodegit-find-diff');
-let findRunTrace = require('./njstrace-find-trace');
+let findNodeDiff = require('./nodegit-find-diff.js');
+let findRunTrace = require('./njstrace-find-trace.js');
+let findDiffTests = require('./find-diff-tests.js')
 
 let resultsFilePath =  path.normalize(path.resolve('../results/traceResults.txt'));
 
@@ -78,5 +79,5 @@ async function runMochaFlake(options) {
   let repoDiff = await findNodeDiff(options);
   await runTesting(options);
   let runTrace = await findRunTrace(options);
-  // findDiffTests(repoDiff, runTrace);
+  let diffTests = findDiffTests(repoDiff, runTrace);
 }
