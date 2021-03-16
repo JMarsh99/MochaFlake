@@ -16,7 +16,9 @@ module.exports = class FilePatchInfo {
     let currentHeaders = this.headers;
     for (let header of currentHeaders){
       let newLineInfoMatch = header.match(/\+(\d+),(\d+)/);
-      modRanges.push(newLineInfoMatch[1]+"-"+newLineInfoMatch[2]);
+      let modRangeEnd =
+        parseInt(newLineInfoMatch[1])+parseInt(newLineInfoMatch[2]);
+      modRanges.push(newLineInfoMatch[1]+"-"+modRangeEnd);
     }
     return modRanges;
   }
