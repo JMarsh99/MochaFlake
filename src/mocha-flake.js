@@ -76,8 +76,12 @@ async function runMochaFlake(options) {
   // create file if doesn't already exist
   await fs.ensureFile(resultsFilePath);
 
-  let repoDiff = await findNodeDiff(options);
-  await runTesting(options);
-  let runTrace = await findRunTrace(options);
-  let diffTests = findDiffTests(repoDiff, runTrace);
+  try {
+    let repoDiff = await findNodeDiff(options);
+    await runTesting(options);
+    let runTrace = await findRunTrace(options);
+    let diffTests = findDiffTests(repoDiff, runTrace);
+  } catch(err){
+    console.log(err);
+  }
 }
