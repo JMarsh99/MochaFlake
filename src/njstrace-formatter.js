@@ -28,9 +28,11 @@ TestFormatter.prototype.onEntry = function(args) {
   let parts = args.file.split(path.sep);
   // ignore calls from files in the test directory
   // ignore calls from the file reporter
+  // ignore anonymous calls
   if (
     !parts.includes(testDirEnd) &&
-    !parts.includes('mocha-json-file-reporter.js')
+    !parts.includes('mocha-json-file-reporter.js') &&
+    args.name != '[Anonymous]'
   ) {
     traceResultsWriter.write(
       'call,'+args.file+','+args.name+','+args.line+'\n'
@@ -44,7 +46,8 @@ TestFormatter.prototype.onExit = function(args) {
   let parts = args.file.split(path.sep);
   if (
     !parts.includes(testDirEnd) &&
-    !parts.includes('mocha-json-file-reporter.js')
+    !parts.includes('mocha-json-file-reporter.js') &&
+    args.name != '[Anonymous]'
   ) {
     traceResultsWriter.write(
       'return,'+args.file+','+args.name+','+args.line+','+args.retLine+'\n'
