@@ -9,6 +9,7 @@ let runTesting = require('./mocha-runner.js');
 let findNodeDiff = require('./nodegit-find-diff.js');
 let findRunTrace = require('./njstrace-find-trace.js');
 let findDiffTests = require('./find-diff-tests.js')
+let markFlakies = require('./mark-flaky.js')
 
 let resultsFilePath =  path.normalize(path.resolve('../results/traceResults.txt'));
 
@@ -68,6 +69,9 @@ inquirer.prompt(
 * -> get the node diff
 * -> run Mocha programmatically
 * -> get the runTrace of the program
+* -> find whether the diff and runTrace overlap
+* -> if that test fails and there is no diff overlap,
+*    mark as flaky
 *
 * @param{Object} options options that Mocha Flake was run with
 */
@@ -81,6 +85,7 @@ async function runMochaFlake(options) {
     await runTesting(options);
     let runTrace = await findRunTrace(options);
     let diffTests = findDiffTests(repoDiff, runTrace);
+    markFlakies(diffTests, options);
   } catch(err){
     console.log(err);
   }
