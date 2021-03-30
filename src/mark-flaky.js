@@ -3,6 +3,8 @@
 let fs = require('fs'),
   path = require('path');
 
+let {getFileInfo, getFilesInDirectory} = require('./flake-util.js');
+
 // get the Runner specified in the jscodeshift library
 // this allows us to run jscodeshift as if we were
 // doing it from command line
@@ -96,40 +98,6 @@ async function determineFlakyTests(overlapInfo) {
     }
   }
   return testsToBeMarked;
-}
-
-// export this to util so it replaces readFileSync :)
-/**
-* Promisified version of readFile which is simpler to call
-* Must be awaited!
-*
-* @param {String} filePath file path of file to be read
-* @return {String} fileInfo file contents in utf-8 format
-*/
-async function getFileInfo(filePath) {
-  const { promisify } = require('util');
-
-  const readFile_promise = promisify(fs.readFile);
-  let fileInfo = readFile_promise(filePath, 'utf-8');
-  return fileInfo;
-}
-
-// export this to util so it replaces readdirSync
-/**
-* Promisified version of readdir which is simpler to call
-* Must be awaited!
-* This may only work on one level (no deeper directories)
-*
-* @param {String} dirPath directory path of files to get
-* @return {Array} dirInfo array of each file in the directory
-*/
-async function getFilesInDirectory(dirPath) {
-  const { promisify } = require('util');
-
-  // for some reason readdir function is all lower case?
-  const readdir_promise = promisify(fs.readdir);
-  let dirInfo = readdir_promise(dirPath);
-  return dirInfo;
 }
 
 /**

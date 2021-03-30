@@ -22,6 +22,8 @@ let fs = require('fs'),
 * @return {Object} traceRanges range of lines covered for each file for each test
 */
 module.exports = async function findRunTrace(options) {
+  // This has to be sync! bad design!
+  // Might need to add locks onto file so that file is only read when complete :/
   let fileData = fs.readFileSync('../results/traceResults.txt', 'utf-8');
   let tracesLists = transformToTraceLists(fileData);
   let tracesList = tracesLists[0];
