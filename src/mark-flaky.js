@@ -15,9 +15,9 @@ let Runner = require('jscodeshift/src/Runner');
 * @param {Object} overlapInfo whether a test overlaps with the diff
 * @param {Object} options options run with Mocha Flake
 */
-module.exports = async function markFlakies(overlapInfo, options) {
+module.exports = async function markFlakies(fileOverlapInfo, options) {
   try {
-    let flakyTests = await determineFlakyTests(overlapInfo);
+    let flakyTests = await determineFlakyTests(fileOverlapInfo);
     let testDirFiles = await getFilesInDirectory(options['testDir']);
     // we need to add the full path not just file name
     testDirFiles = testDirFiles.map(fileName => path.join(options['testDir'], fileName));
@@ -25,6 +25,14 @@ module.exports = async function markFlakies(overlapInfo, options) {
   } catch(err) {
     console.log(err);
   }
+}
+
+async function findFlakiesInFiles(fileOverlapInfo) {
+  for (fileKey in fileOverlapInfo) {
+    fileOverlapInfo[fileKey] =
+      await determineFlakyTests(fileOverlapInfo[fileKey], fileKey);
+  }
+  return fileOverlapInfo;
 }
 
 /**
@@ -38,16 +46,23 @@ module.exports = async function markFlakies(overlapInfo, options) {
 * to be marked with a comment
 */
 async function determineFlakyTests(overlapInfo) {
+  // we need to watch this!
+  // only picks up previous runs!
   let fileInfoJSON = await getFileInfo('../results/testResults.json');
+  console.log(fileInfoJSON);
   // turn into js object
   let fileInfo = JSON.parse(fileInfoJSON);
   let testResultsFailures = fileInfo['failures'];
-  let testsToBeMarked = [];
+  // from https://stackoverflow.com/questions/54218671/return-object-with-default-values-from-array-in-javascript
+  // needed to turn each title into a key for a dictionary
+  let testsToBeMarked =
+    Object.keys(overlapInfo).reduce((acc, key) => ({...acc, [key]: []}), {});
   if (testResultsFailures.length != 0) {
     for (test of testResultsFailures) {
       let title = test['title'];
-      if (!overlapInfo[title]) {
-        testsToBeMarked.push(title);
+      let file = path.basename(test['file']);
+      if (!overlapInfo[file][title]) {
+        testsToBeMarked[file].push(title);
       }
     }
   }

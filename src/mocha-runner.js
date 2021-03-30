@@ -48,7 +48,11 @@ module.exports = async function runTesting(options) {
 
   // Write the test and title to trace file to separate tests
   mocha.suite.beforeEach(function() {
-    traceResultsWriter.write('testsplit\n'+this.currentTest.title+'\n');
+    traceResultsWriter.write(
+      'testsplit\n'+
+      this.currentTest.title+'\n'+
+      path.basename(this.currentTest.file)+'\n'
+    );
   });
 
 

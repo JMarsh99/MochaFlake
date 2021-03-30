@@ -1,5 +1,7 @@
 // Transformer code for jscodeshift
 
+let path = require('path');
+
 /**
 * Transformer used by jscodeshift code in mark-flaky.js
 * First checks if comments have already been added,
@@ -14,7 +16,9 @@
 * @param {Object} options options run with jscodeshift
 */
 module.exports = function (file, api, options) {
-  let testsToMark = options['testsToMark'];
+  let testFileName = path.basename(file['path'])
+  let testsToMark = options['testsToMark'][testFileName];
+  console.log(testsToMark);
   const j = api.jscodeshift;
 
   const comment = j.commentLine(' Suspected flaky test');

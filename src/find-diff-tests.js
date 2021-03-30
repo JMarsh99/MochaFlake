@@ -12,18 +12,21 @@
 * boolean value. true -> has been modified, false -> unmodified
 */
 module.exports = function findDiffTests(repoDiff, runTrace) {
-  let testChanged = {};
-  for (testKey in runTrace) {
-    // if no lines are covered in code during the test (kind of a useless test)
-    // automatically set to false
-    if (Object.keys(runTrace[testKey]).length != 0) {
-      testChanged[testKey] = findTestChange(runTrace[testKey], repoDiff);
-    }
-    else {
-      testChanged[testKey] = false;
+  // from https://stackoverflow.com/questions/54218671/return-object-with-default-values-from-array-in-javascript
+  // needed to turn each file into a key for a dictionary
+  for (fileKey in runTrace) {
+    for (testKey in runTrace[fileKey]) {
+      // if no lines are covered in code during the test (kind of a useless test)
+      // automatically set to false
+      if (Object.keys(runTrace[fileKey][testKey]).length != 0) {
+        runTrace[fileKey][testKey] = findTestChange(runTrace[fileKey][testKey], repoDiff);
+      }
+      else {
+        runTrace[fileKey][testKey] = false;
+      }
     }
   }
-  return testChanged;
+  return runTrace;
 }
 
 /**

@@ -26,8 +26,10 @@ module.exports = async function findRunTrace(options) {
   let tracesLists = transformToTraceLists(fileData);
   let tracesList = tracesLists[0];
   let titleList = tracesLists[1];
-  let traceDict = getTraceLines(tracesList, titleList, options['repoDir']);
-  let traceRanges = getRangesFromTraces(traceDict);
+  let testFileList = tracesLists[2];
+  let traceFileDict =
+    getFileTraces(tracesList, titleList, testFileList, options['repoDir']);
+  let traceRanges = getFileRanges(traceFileDict);
   return traceRanges;
 }
 
@@ -42,6 +44,7 @@ module.exports = async function findRunTrace(options) {
 function transformToTraceLists(fileData) {
   let tracesList = [];
   let titleList = [];
+  let testFileList = [];
   // keyword for splitting test runs
   let testTraces = fileData.split('testsplit');
   for (testTrace of testTraces) {
@@ -54,6 +57,9 @@ function transformToTraceLists(fileData) {
       // remove the test title and push to array
       let testTitle = testTrace.shift();
       titleList.push(testTitle);
+      // get the filename (for multiple test files)
+      let testFile = testTrace.shift();
+      testFileList.push(testFile);
       // filter and add all return statements
       // these contain all info needed
       // (call statments just repeat part of the info)
@@ -61,7 +67,7 @@ function transformToTraceLists(fileData) {
       tracesList.push(testTrace);
     }
   }
-  return [tracesList, titleList];
+  return [tracesList, titleList, testFileList];
 }
 
 /**
@@ -82,6 +88,42 @@ function isReturnStatement(statement) {
 }
 
 /**
+* wrapper for getTraceLines that allows for multiple test files
+*
+* @param {Array} tracesList array of trace statements for a given test
+* @param {Array} titleList array of titles for each test
+* @param {Array} testFileList array of the file test is from
+* @param {String} pathToRepo path to the repository being tested
+*/
+function getFileTraces(tracesList, titleList, testFileList, pathToRepo) {
+  traceFileDict = {};
+
+  // split title list into specific test files
+  // have dictionary point file to tests within that file
+  for ([index, testFile] of testFileList.entries()) {
+    let currentTrace = tracesList[index];
+    let currentTitle = titleList[index];
+    if (testFile in traceFileDict) {
+      traceFileDict[testFile][0].push(currentTitle);
+      traceFileDict[testFile][1].push(currentTrace);
+    }
+    else {
+      traceFileDict[testFile] = [[currentTitle],[currentTrace]];
+    }
+  }
+  // get trace values for each set of files
+  for (fileKey in traceFileDict) {
+    traceFileDict[fileKey] =
+      getTraceLines(
+        traceFileDict[fileKey][1],
+        traceFileDict[fileKey][0],
+        pathToRepo
+      );
+  }
+  return traceFileDict;
+}
+
+/**
 * Turn each trace statement into a combined list of all covered
 * lines for each file for each test
 *
@@ -95,6 +137,7 @@ function isReturnStatement(statement) {
 *
 * @param {Array} tracesList array of trace statements for a given test
 * @param {Array} titleList array of titles for each test
+* @param {String} pathToRepo path to the repository being tested
 *
 * @return {Object} traceDict 2D dictionary of tests which point to files called
 * which then point to the array of lines covered
@@ -103,7 +146,7 @@ function getTraceLines(tracesList, titleList, pathToRepo) {
   // from https://stackoverflow.com/questions/54218671/return-object-with-default-values-from-array-in-javascript
   // needed to turn each title into a key for a dictionary
   traceDict = titleList.reduce((acc, key) => ({...acc, [key]: {}}), {});
-  for ([index,testTrace] of tracesList.entries()) {
+  for ([index, testTrace] of tracesList.entries()) {
     for (statement of testTrace) {
       // this is the trace for that test
       statement = statement.split(',');
@@ -128,6 +171,18 @@ function getTraceLines(tracesList, titleList, pathToRepo) {
     }
   }
   return traceDict;
+}
+
+/**
+* wrapper for getRangesFromTraces to allow for multiple files
+*
+* @param {Object} traceFileDict dictionary that points from files to traces
+*/
+function getFileRanges(traceFileDict) {
+  for (fileKey in traceFileDict) {
+    traceFileDict[fileKey] = getRangesFromTraces(traceFileDict[fileKey]);
+  }
+  return traceFileDict;
 }
 
 /**
