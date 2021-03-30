@@ -18,7 +18,6 @@ let path = require('path');
 module.exports = function (file, api, options) {
   let testFileName = path.basename(file['path'])
   let testsToMark = options['testsToMark'][testFileName];
-  console.log(testsToMark);
   const j = api.jscodeshift;
 
   const comment = j.commentLine(' Suspected flaky test');

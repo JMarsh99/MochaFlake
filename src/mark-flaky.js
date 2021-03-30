@@ -27,12 +27,39 @@ module.exports = async function markFlakies(fileOverlapInfo, options) {
   }
 }
 
-async function findFlakiesInFiles(fileOverlapInfo) {
-  for (fileKey in fileOverlapInfo) {
-    fileOverlapInfo[fileKey] =
-      await determineFlakyTests(fileOverlapInfo[fileKey], fileKey);
-  }
-  return fileOverlapInfo;
+/**
+* Wait for a JSON file not to be empty (only contain {})
+* resolve with contents when file is not empty
+*
+* For contextual use, this is used to wait for the Mocha results to be
+* loaded into testResults.json as this is not immediate
+*
+* This is heavily based on the answer from:
+* https://stackoverflow.com/questions/26165725/nodejs-check-file-exists-if-not-wait-till-it-exist
+*
+* @param {String} filePath path to file to be waited on
+* @param {Integer} timeout time before rejecting for taking too long
+*/
+async function waitForResults(filePath, timeout) {
+  return new Promise(function (resolve, reject) {
+
+    // timeout function
+    // reject if timeout reached
+    var timer = setTimeout(function () {
+      watcher.close();
+      reject(new Error('Timeout for results reached! Mocha took too long to get results'));
+    }, timeout);
+
+    // watcher function, fire callback if file changed
+    let watcher = fs.watch(filePath, async function(eventType, filename) {
+      let fileInfo = await getFileInfo(filePath);
+      if (fileInfo != "{}") {
+        clearTimeout(timer);
+        watcher.close();
+        resolve(fileInfo);
+      }
+    });
+  });
 }
 
 /**
@@ -46,10 +73,12 @@ async function findFlakiesInFiles(fileOverlapInfo) {
 * to be marked with a comment
 */
 async function determineFlakyTests(overlapInfo) {
-  // we need to watch this!
-  // only picks up previous runs!
-  let fileInfoJSON = await getFileInfo('../results/testResults.json');
-  console.log(fileInfoJSON);
+  // we need to wait for the results from Mocha to finish
+  // before we retrieve that information
+  // timeout set to 10 mins but some projects probably need longer
+  // TODO: add user option for timeout?
+  let fileInfoJSON = await waitForResults('../results/testResults.json', 600000);
+
   // turn into js object
   let fileInfo = JSON.parse(fileInfoJSON);
   let testResultsFailures = fileInfo['failures'];

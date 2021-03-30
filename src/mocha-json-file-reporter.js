@@ -46,7 +46,6 @@ class MyReporter {
       fs.writeFile(resultsPath, JSON.stringify(obj, null, 2), function (err) {
         if (err) return console.log(err);
       });
-      console.log('done');
     });
   }
 }

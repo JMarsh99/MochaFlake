@@ -60,6 +60,7 @@ module.exports = async function runTesting(options) {
     // TODO: make this non-blocking
     // maybe use different flag writestream?
     fs.writeFileSync('../results/traceResults.txt', '');
+    fs.writeFileSync('../results/testResults.json', '{}');
     // shuffle suites if in options
     if (options['shuffled']) {
       shuffleArray(mocha.suite.suites);
