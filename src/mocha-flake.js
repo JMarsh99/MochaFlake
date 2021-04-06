@@ -19,6 +19,7 @@ let myArgs = process.argv.slice(2);
 // set default options
 let options = {
   mode: 'Trace+Git',
+  retryNumber: 1,
   shuffled: false,
   testOrder: [],
   repoDir: path.normalize(path.resolve(myArgs[0])),
@@ -42,6 +43,9 @@ inquirer.prompt(
 ).then(answers => {
   // ask whether test order should be shuffled
   options['mode'] = answers['runMode'];
+  if (options['mode'] == 'Rerun') {
+    options['retryNumber'] = 2;
+   }
   inquirer.prompt(
     [
       {
@@ -50,7 +54,6 @@ inquirer.prompt(
         message: 'What order do you want to run',
         choices: [
           'Standard Order',
-          'Input Order',
           'Shuffle Order'
         ]
       }
@@ -69,6 +72,8 @@ inquirer.prompt(
 
 /**
 * Centrally runs all the features of Mocha Flake
+*
+* For Trace+Git
 * -> get the node diff
 * -> run Mocha programmatically
 * -> get the runTrace of the program
@@ -76,6 +81,11 @@ inquirer.prompt(
 * -> if that test fails and there is no diff overlap,
 *    mark as flaky
 *
+* For Rerun
+* -> run Mocha programmatically with retryNumber option,
+     this will rerun the Mocha test suite multiple times
+* -> Collect information about the test runs
+* -> Determine which tests both pass and fail and mark them as flaky
 * @param{Object} options options that Mocha Flake was run with
 */
 async function runMochaFlake(options) {
@@ -83,13 +93,24 @@ async function runMochaFlake(options) {
   // create file if doesn't already exist
   await fs.ensureFile(resultsFilePath);
 
-  try {
-    let repoDiff = await findNodeDiff(options);
-    await runTesting(options);
-    let runTrace = await findRunTrace(options);
-    let diffTests = findDiffTests(repoDiff, runTrace);
-    markFlakies(diffTests, options);
-  } catch(err){
-    console.log(err);
+  if (options['mode'] == 'Trace+Git') {
+    console.log('Running njsTrace with nodegit')
+    try {
+      let repoDiff = await findNodeDiff(options);
+      await runTesting(options);
+      let runTrace = await findRunTrace(options);
+      let diffTests = findDiffTests(repoDiff, runTrace);
+      markFlakies(diffTests, options);
+    } catch(err){
+      console.log(err);
+    }
+  } else if (options['mode'] == 'Rerun') {
+    try {
+      await runTesting(options);
+    } catch(err) {
+      console.log(err);
+    }
+  } else {
+    console.log('Not implemented yet :/');
   }
 }

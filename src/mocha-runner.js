@@ -79,11 +79,34 @@ module.exports = async function runTesting(options) {
     }
   });
 
-  // Run the tests
-  mocha.run(function(failures) {
-    // exit with non-zero status if there were failures
-    process.exitCode = failures ? 1 : 0;
-  });
+  // allows running of the Mocha test suite multiple times
+  mocha.cleanReferencesAfterRun(false);
+
+  // run the mocha instance an amount of times
+  runMochaRecursive(options['retryNumber'], mocha);
+}
+
+/**
+* run Mocha within the callback until a limit is reached
+* this allows for multiple runs of Mocha serially
+*
+* @param {Integer} limit how many times to run a Mocha instance
+* @param {Object} mocha mocha instance to use
+* @param {Integer} num optional. Keeps track of the current recursive iteration
+*/
+function runMochaRecursive(limit, mocha, num = 0) {
+  if (num < limit) {
+    mocha.run(function(failures) {
+      process.exitCode = failures ? 1 : 0;  // exit with non-zero status if there were failures
+      runMochaRecursive(limit, mocha, num+1);
+    });
+  }
+  else {
+    // dispose of the mocha instance manually
+    // (since cleanReferencesAfterRun called)
+    // this stops memory leaks!
+    mocha.dispose();
+  }
 }
 
 /**
