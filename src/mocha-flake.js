@@ -8,8 +8,8 @@ let inquirer = require('inquirer'),
 let runTesting = require('./mocha-runner.js');
 let findNodeDiff = require('./nodegit-find-diff.js');
 let findRunTrace = require('./njstrace-find-trace.js');
-let findDiffTests = require('./find-diff-tests.js')
-let markFlakies = require('./mark-flaky.js')
+let findDiffTests = require('./find-diff-tests.js');
+let markFlakies = require('./mark-flaky.js');
 
 let resultsFilePath =  path.normalize(path.resolve('../results/traceResults.txt'));
 
@@ -18,50 +18,53 @@ let myArgs = process.argv.slice(2);
 
 // set default options
 let options = {
+  mode: 'Trace+Git',
   shuffled: false,
   testOrder: [],
   repoDir: path.normalize(path.resolve(myArgs[0])),
   testDir: path.normalize(path.resolve(myArgs[1]))
 };
 
-// ask for test order preference
+// ask for test mode preference
 inquirer.prompt(
   [
     {
       type: 'list',
-      name: 'runOrder',
-      message: 'What order do you want to run',
+      name: 'runMode',
+      message: 'What mode do you want to run',
       choices: [
-        'Standard Order',
-        'Input Order',
-        'Shuffle Order'
+        'Trace+Git',
+        'Rerun',
+        'Both'
       ]
     }
   ]
 ).then(answers => {
-  if (answers['runOrder'] == 'Input Order') {
-    inquirer.prompt(
+  // ask whether test order should be shuffled
+  options['mode'] = answers['runMode'];
+  inquirer.prompt(
+    [
       {
-        type: 'input',
+        type: 'list',
         name: 'runOrder',
-        message: 'Input Order (Test order is determined by order in file)'
+        message: 'What order do you want to run',
+        choices: [
+          'Standard Order',
+          'Input Order',
+          'Shuffle Order'
+        ]
       }
-    ).then(answers => {
-      // TODO: validate the answer here
-      // currently put in numbers corresponding to each test (not ideal)
-      arrayOrder = answers['runOrder'].split(',').map(x => parseInt(x));
-      options['testOrder'] = arrayOrder;
+    ]
+  ).then(answers => {
+    if (answers['runOrder'] == 'Shuffle Order') {
+      // run Mocha with order shuffled
+      options['shuffled'] = true;
       runMochaFlake(options);
-    });
-  }
-  else if (answers['runOrder'] == 'Shuffle Order') {
-    // run Mocha with order shuffled
-    options['shuffled'] = true;
-    runMochaFlake(options);
-  }
-  else {
-    runMochaFlake(options);
-  }
+    }
+    else {
+      runMochaFlake(options);
+    }
+  });
 });
 
 /**
