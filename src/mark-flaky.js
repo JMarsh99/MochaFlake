@@ -43,14 +43,15 @@ module.exports = async function markFlakies(fileOverlapInfo, options) {
 * @param {Integer} timeout time before rejecting for taking too long
 */
 async function waitForResults(filePath, timeout) {
-  return new Promise(function (resolve, reject) {
-
+  return new Promise(async function (resolve, reject) {
     // timeout function
     // reject if timeout reached
     var timer = setTimeout(function () {
       watcher.close();
       reject(new Error('Timeout for results reached! Mocha took too long to get results'));
     }, timeout);
+
+
 
     // watcher function, fire callback if file changed
     let watcher = fs.watch(filePath, async function(eventType, filename) {
@@ -61,6 +62,14 @@ async function waitForResults(filePath, timeout) {
         resolve(fileInfo);
       }
     });
+
+    // check that the file isn't empty anyway
+    let fileInfo = await getFileInfo(filePath);
+    if (fileInfo != "{}") {
+      clearTimeout(timer);
+      watcher.close();
+      resolve(fileInfo);
+    }
   });
 }
 
@@ -80,9 +89,9 @@ async function determineFlakyTests(overlapInfo) {
   // timeout set to 10 mins but some projects probably need longer
   // TODO: add user option for timeout?
   let fileInfoJSON = await waitForResults('../results/testResults.json', 600000);
-
   // turn into js object
   let fileInfo = JSON.parse(fileInfoJSON);
+  // fileInfo = fileInfo[0];
   let testResultsFailures = fileInfo['failures'];
   // from https://stackoverflow.com/questions/54218671/return-object-with-default-values-from-array-in-javascript
   // needed to turn each title into a key for a dictionary

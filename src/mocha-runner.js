@@ -79,6 +79,10 @@ module.exports = async function runTesting(options) {
     }
   });
 
+  mocha.suite.afterAll(function () {
+    traceResultsWriter.write('testingended');
+  });
+
   // allows running of the Mocha test suite multiple times
   mocha.cleanReferencesAfterRun(false);
 
@@ -95,9 +99,13 @@ module.exports = async function runTesting(options) {
 * @param {Integer} num optional. Keeps track of the current recursive iteration
 */
 function runMochaRecursive(limit, mocha, num = 0) {
+  // fs.writeFile(resultsFilePath, "", function (err) {
+  //   if (err) return console.log(err);
+  // });
   if (num < limit) {
     mocha.run(function(failures) {
-      process.exitCode = failures ? 1 : 0;  // exit with non-zero status if there were failures
+      // exit with non-zero status if there were failures
+      process.exitCode = failures ? 1 : 0;
       runMochaRecursive(limit, mocha, num+1);
     });
   }
