@@ -51,11 +51,11 @@ async function waitForResults(filePath, timeout) {
       reject(new Error('Timeout for results reached! Mocha took too long to get results'));
     }, timeout);
 
-
+    let fileInfo;
 
     // watcher function, fire callback if file changed
     let watcher = fs.watch(filePath, async function(eventType, filename) {
-      let fileInfo = await getFileInfo(filePath);
+      fileInfo = await getFileInfo(filePath);
       if (fileInfo != "{}") {
         clearTimeout(timer);
         watcher.close();
@@ -64,7 +64,7 @@ async function waitForResults(filePath, timeout) {
     });
 
     // check that the file isn't empty anyway
-    let fileInfo = await getFileInfo(filePath);
+    fileInfo = await getFileInfo(filePath);
     if (fileInfo != "{}") {
       clearTimeout(timer);
       watcher.close();
@@ -91,7 +91,8 @@ async function determineFlakyTests(overlapInfo) {
   let fileInfoJSON = await waitForResults('../results/testResults.json', 600000);
   // turn into js object
   let fileInfo = JSON.parse(fileInfoJSON);
-  // fileInfo = fileInfo[0];
+  // since it's the only run, just get the first value
+  fileInfo = fileInfo[0];
   let testResultsFailures = fileInfo['failures'];
   // from https://stackoverflow.com/questions/54218671/return-object-with-default-values-from-array-in-javascript
   // needed to turn each title into a key for a dictionary

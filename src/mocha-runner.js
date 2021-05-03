@@ -99,9 +99,6 @@ module.exports = async function runTesting(options) {
 * @param {Integer} num optional. Keeps track of the current recursive iteration
 */
 function runMochaRecursive(limit, mocha, num = 0) {
-  // fs.writeFile(resultsFilePath, "", function (err) {
-  //   if (err) return console.log(err);
-  // });
   if (num < limit) {
     mocha.run(function(failures) {
       // exit with non-zero status if there were failures
