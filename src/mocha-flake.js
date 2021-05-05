@@ -25,7 +25,8 @@ let options = {
   shuffled: false,
   testOrder: [],
   repoDir: path.normalize(path.resolve(myArgs[0])),
-  testDir: path.normalize(path.resolve(myArgs[1]))
+  testDir: path.normalize(path.resolve(myArgs[1])),
+  useCurrentWorkingTree: false
 };
 
 // ask for test mode preference

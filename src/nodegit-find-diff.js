@@ -2,7 +2,8 @@
 // then find the all the headers for each file (none if only added)
 
 let nodegit = require('nodegit'),
-  path = require('path');
+  path = require('path'),
+  nodegitKit = require("nodegit-kit");
 
 // file patch info class
 // stores file path and headers
@@ -18,7 +19,12 @@ FilePatchInfo = require('./FilePatchInfo');
 module.exports = async function findNodeDiff(options) {
   try {
     let pathToRepo = options['repoDir'];
-    let patchInfo = await getPatchInfo(pathToRepo);
+    let patchInfo;
+    if (options['useCurrentWorkingTree']) {
+      patchInfo = await getPatchInfo(pathToRepo);
+    } else {
+      patchInfo = await getPatchInfoForCommits(pathToRepo);
+    }
     return patchInfo;
   } catch(error) {
     console.log(error);
@@ -62,6 +68,48 @@ function getPatchInfo(pathToRepo) {
     });
   });
 };
+
+/**
+* Gets the diff for the last two commits instead of working tree
+* Note: nodegit-kit is used here, this is a module found after the
+* above was created
+*
+* This is adapted from the nodegit-kit README examples
+*
+* @param {String} pathToRepo path to the repo being tested
+*/
+async function getPatchInfoForCommits(pathToRepo) {
+  return new Promise((resolve, reject) => {
+    nodegitKit.open(pathToRepo)
+    .then(repo => {
+      // Note: branch defaults to master as documented in nodegit-kit
+      // This was phased out as in this article:
+      // https://www.bbc.co.uk/news/technology-53050955
+      // I've set it to use 'main' here
+      // maybe add an option for which branch to use?
+      return nodegitKit.log(repo, { sort: 'reverse', branch: 'main' })
+        .then(history => {
+            var commit1 = history[0].commit;
+            var commit2 = history[1].commit;
+            // git diff <from> <to>
+            return nodegitKit.diff(repo, commit1, commit2);
+        })
+        .then(diff => {
+          let repoPatchObjects = {};
+          for (diffPart of diff) {
+            let diffPath = path.normalize(diffPart['path']);
+            let hunkHeaders = [];
+            for (hunk of diffPart['hunks']) {
+              hunkHeaders.push(hunk.split('\n')[0]);
+            }
+            let patchObject = new FilePatchInfo(diffPath, hunkHeaders);
+            repoPatchObjects[diffPath] = patchObject;
+          }
+          resolve(repoPatchObjects);
+        });
+    });
+  })
+}
 
 /**
 * Get the headers for a given patch
