@@ -9,7 +9,9 @@ let runTesting = require('./mocha-runner.js');
 let findNodeDiff = require('./nodegit-find-diff.js');
 let findRunTrace = require('./njstrace-find-trace.js');
 let findDiffTests = require('./find-diff-tests.js');
-let markFlakies = require('./mark-flaky.js');
+let markFlakies = require('./determine-flaky.js');
+let findRerunFlakies = require('./find-rerun-flaky');
+let addFlakyComments = require('./mark-flaky');
 
 let resultsFilePath =  path.normalize(path.resolve('../results/traceResults.txt'));
 
@@ -107,6 +109,21 @@ async function runMochaFlake(options) {
   } else if (options['mode'] == 'Rerun') {
     try {
       await runTesting(options);
+      let rerunFlakies = await findRerunFlakies();
+      let markFlag = false;
+      for (fileKey in rerunFlakies) {
+        // run the rest only if there are flaky tests
+        if (rerunFlakies[fileKey].length > 0) {
+          markFlag = true;
+        }
+      }
+      if (markFlag) {
+        let testDirFiles = Object.keys(rerunFlakies).map(
+          fileName => path.join(options['testDir'], fileName)
+        );
+        addFlakyComments(testDirFiles, rerunFlakies);
+      }
+
     } catch(err) {
       console.log(err);
     }

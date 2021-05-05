@@ -11,7 +11,7 @@ let fs = require('fs');
 * @param {String} filePath file path of file to be read
 * @return {String} fileInfo file contents in utf-8 format
 */
-exports.getFileInfo = async function getFileInfo(filePath) {
+let getFileInfo = exports.getFileInfo = async function getFileInfo(filePath) {
   const readFile_promise = promisify(fs.readFile);
   let fileInfo = readFile_promise(filePath, 'utf-8');
   return fileInfo;
@@ -31,4 +31,38 @@ exports.getFilesInDirectory = async function getFilesInDirectory(dirPath) {
   const readdir_promise = promisify(fs.readdir);
   let dirInfo = readdir_promise(dirPath);
   return dirInfo;
+}
+
+/**
+* Wait for a file to not be added to for a certain timeout
+*
+* For contextual use, this is used to wait for the Mocha results to be
+* loaded into testResults.json as this is not immediate
+*
+* This is heavily based on the answer from:
+* https://stackoverflow.com/questions/26165725/nodejs-check-file-exists-if-not-wait-till-it-exist
+*
+* @param {String} filePath path to file to be waited on
+* @param {Integer} timeout time before rejecting for taking too long
+*/
+exports.waitForResults = async function waitForResults(filePath, timeout) {
+  return new Promise(async function (resolve, reject) {
+    let fileInfo = await getFileInfo(filePath);
+    // timeout function
+    // reject if timeout reached
+    var timer = setTimeout(function () {
+      watcher.close();
+      resolve(fileInfo);
+    }, timeout);
+
+    // watcher function, fire callback if file changed
+    let watcher = fs.watch(filePath, async function(eventType, filename) {
+      fileInfo = await getFileInfo(filePath);
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        watcher.close();
+        resolve(fileInfo);
+      }, timeout);
+    });
+  });
 }
