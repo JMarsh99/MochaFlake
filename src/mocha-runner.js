@@ -62,17 +62,6 @@ module.exports = async function runTesting(options) {
     if (options['shuffled']) {
       shuffleArray(mocha.suite.suites);
     }
-    else {
-      // set the order if given
-      let testOrder = options['testOrder'];
-      if (testOrder.length > 0) {
-        let testArray = [];
-        for (position of testOrder) {
-          testArray.push(mocha.suite.suites[position-1]);
-        }
-        mocha.suite.suites = testArray;
-      }
-    }
   });
 
   mocha.suite.afterAll(function () {

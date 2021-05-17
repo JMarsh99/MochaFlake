@@ -26,7 +26,6 @@ let options = {
   mode: 'Trace+Git',
   retryNumber: 5,
   shuffled: false,
-  testOrder: [],
   repoDir: path.normalize(path.resolve(myArgs[0])),
   testDir: path.normalize(path.resolve(myArgs[1])),
   useCurrentWorkingTree: false,
