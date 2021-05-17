@@ -5,6 +5,10 @@ let inquirer = require('inquirer'),
   path = require('path'),
   fs = require('fs-extra');
 
+  if (!fs.existsSync('../results')){
+      fs.mkdirSync('../results');
+  }
+
 let runTesting = require('./mocha-runner.js');
 let findNodeDiff = require('./nodegit-find-diff.js');
 let findRunTrace = require('./njstrace-find-trace.js');
