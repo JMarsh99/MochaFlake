@@ -54,3 +54,5 @@ Within mocha-flake.js there is also an options object which is used to set the o
 - branchName -> If using past commits, what branch to use. For older projects, it needs to be set to "master" instead of "main"
 - gitCommitToCheck -> Which commit to check when using past commits
 
+# Running with TestingRepo
+Since some changes and commits needed to be made to testingRepo, it doesn't have the same Git information as needed to track through the working tree. This is because the Git commits affect whether certain tests are marked and originally some files should be uncommited or modified if using the working tree. Therefore, setting useCurrentWorkingTree to false and gitCommitToCheck to 7 should give the same results as in the dissertation and presentation.
