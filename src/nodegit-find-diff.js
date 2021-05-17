@@ -23,7 +23,9 @@ module.exports = async function findNodeDiff(options) {
     if (options['useCurrentWorkingTree']) {
       patchInfo = await getPatchInfo(pathToRepo);
     } else {
-      patchInfo = await getPatchInfoForCommits(pathToRepo, options['branchName']);
+      patchInfo = await getPatchInfoForCommits(
+        pathToRepo, options['branchName'], options['gitCommitToCheck']
+      );
     }
     return patchInfo;
   } catch(error) {
@@ -78,7 +80,7 @@ function getPatchInfo(pathToRepo) {
 *
 * @param {String} pathToRepo path to the repo being tested
 */
-async function getPatchInfoForCommits(pathToRepo, branch) {
+async function getPatchInfoForCommits(pathToRepo, branch, gitCommitToCheck) {
   return new Promise((resolve, reject) => {
     nodegitKit.open(pathToRepo)
     .then(repo => {
@@ -88,7 +90,7 @@ async function getPatchInfoForCommits(pathToRepo, branch) {
       return nodegitKit.log(repo, { sort: 'reverse', branch: branch })
         .then(history => {
             var commit1 = history[0].commit;
-            var commit2 = history[1].commit;
+            var commit2 = history[gitCommitToCheck].commit;
             // git diff <from> <to>
             return nodegitKit.diff(repo, commit1, commit2);
         })

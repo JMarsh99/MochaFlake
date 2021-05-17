@@ -30,7 +30,8 @@ let options = {
   repoDir: path.normalize(path.resolve(myArgs[0])),
   testDir: path.normalize(path.resolve(myArgs[1])),
   useCurrentWorkingTree: false,
-  branchName: "main"
+  branchName: "main",
+  gitCommitToCheck: 1
 };
 
 // ask for test mode preference
