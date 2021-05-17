@@ -15,18 +15,18 @@ let addFlakyComments = require('./mark-flaky');
 
 let resultsFilePath =  path.normalize(path.resolve('../results/traceResults.txt'));
 
-// TODO: either use commander or integrate into inquirer
 let myArgs = process.argv.slice(2);
 
 // set default options
 let options = {
   mode: 'Trace+Git',
-  retryNumber: 1,
+  retryNumber: 5,
   shuffled: false,
   testOrder: [],
   repoDir: path.normalize(path.resolve(myArgs[0])),
   testDir: path.normalize(path.resolve(myArgs[1])),
-  useCurrentWorkingTree: false
+  useCurrentWorkingTree: false,
+  branchName: "main"
 };
 
 // ask for test mode preference
@@ -38,17 +38,13 @@ inquirer.prompt(
       message: 'What mode do you want to run',
       choices: [
         'Trace+Git',
-        'Rerun',
-        'Both'
+        'Rerun'
       ]
     }
   ]
 ).then(answers => {
   // ask whether test order should be shuffled
   options['mode'] = answers['runMode'];
-  if (options['mode'] == 'Rerun') {
-    options['retryNumber'] = 2;
-   }
   inquirer.prompt(
     [
       {
@@ -97,20 +93,29 @@ async function runMochaFlake(options) {
   await fs.ensureFile(resultsFilePath);
 
   if (options['mode'] == 'Trace+Git') {
+    options['retryNumber'] = 1;
     console.log('Running njsTrace with nodegit')
     try {
       let repoDiff = await findNodeDiff(options);
+      console.log("repoDiff found");
       await runTesting(options);
+      console.log("run testing complete");
       let runTrace = await findRunTrace(options);
+      console.log("run trace complete");
       let diffTests = findDiffTests(repoDiff, runTrace);
+      console.log("diff tests found");
       markFlakies(diffTests, options);
+      console.log("flakies marked");
     } catch(err){
       console.log(err);
     }
   } else if (options['mode'] == 'Rerun') {
+    console.log('Running rerun module');
     try {
       await runTesting(options);
+      console.log("run testing complete");
       let rerunFlakies = await findRerunFlakies();
+      console.log("flakies found");
       let markFlag = false;
       for (fileKey in rerunFlakies) {
         // run the rest only if there are flaky tests
@@ -119,12 +124,13 @@ async function runMochaFlake(options) {
         }
       }
       if (markFlag) {
+        console.log("there were some flakies")
         let testDirFiles = Object.keys(rerunFlakies).map(
           fileName => path.join(options['testDir'], fileName)
         );
         addFlakyComments(testDirFiles, rerunFlakies);
+        console.log("flakies marked");
       }
-
     } catch(err) {
       console.log(err);
     }

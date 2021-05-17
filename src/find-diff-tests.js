@@ -12,8 +12,6 @@
 * boolean value. true -> has been modified, false -> unmodified
 */
 module.exports = function findDiffTests(repoDiff, runTrace) {
-  // from https://stackoverflow.com/questions/54218671/return-object-with-default-values-from-array-in-javascript
-  // needed to turn each file into a key for a dictionary
   for (fileKey in runTrace) {
     for (testKey in runTrace[fileKey]) {
       // if no lines are covered in code during the test (kind of a useless test)
@@ -47,7 +45,11 @@ function findTestChange(test, repoDiff) {
       let fileDiffRanges = repoDiff[path].getModRanges();
       // if one overlap is true, we don't need to consider other files
       // as the test still uses modified code
-      if (rangeOverlap(test[path], fileDiffRanges)) {
+      if (fileDiffRanges.length == 0){
+        // if the file has no headers it is uncommited
+        // and therefore is all overlap
+        return true;
+      } else if (rangeOverlap(test[path], fileDiffRanges)) {
         return true;
       }
     }

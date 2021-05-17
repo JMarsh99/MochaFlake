@@ -43,24 +43,27 @@ class MyReporter {
         failures: failures.map(clean),
         passes: passes.map(clean)
       };
-      // append new json object
       fs.readFile(resultsPath, (err, data) => {
         let dataArray = [];
-        if (err) return console.log(err);
-        let dataObject = JSON.parse(data);
+        if (err) throw console.log(err);
+        let dataObject;
+        try {
+          dataObject = JSON.parse(data);
+        } catch (err) {
+          dataObject = {};
+        }
         // if there's already an array, push it to the current array
         if (Object.keys(dataObject).length !== 0) {
           dataArray = dataObject
         }
         dataArray.push(obj);
         fs.writeFile(resultsPath, JSON.stringify(dataArray, null, 2), function (err) {
-          if (err) return console.log(err);
+          if (err) throw console.log(err);
         });
       });
     });
   }
 }
-
 
 /**
  * Return a plain-object representation of `test`

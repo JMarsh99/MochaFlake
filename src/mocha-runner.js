@@ -57,16 +57,12 @@ module.exports = async function runTesting(options) {
 
 
   mocha.suite.beforeAll(function () {
-    // TODO: make this non-blocking
-    // maybe use different flag writestream?
     fs.writeFileSync('../results/traceResults.txt', '');
-    fs.writeFileSync('../results/testResults.json', '{}');
     // shuffle suites if in options
     if (options['shuffled']) {
       shuffleArray(mocha.suite.suites);
     }
     else {
-      // TODO: Make more robust
       // set the order if given
       let testOrder = options['testOrder'];
       if (testOrder.length > 0) {
@@ -87,6 +83,8 @@ module.exports = async function runTesting(options) {
   mocha.cleanReferencesAfterRun(false);
 
   // run the mocha instance an amount of times
+
+  fs.writeFileSync('../results/testResults.json', '{}');
   runMochaRecursive(options['retryNumber'], mocha);
 }
 
@@ -103,7 +101,9 @@ function runMochaRecursive(limit, mocha, num = 0) {
     mocha.run(function(failures) {
       // exit with non-zero status if there were failures
       process.exitCode = failures ? 1 : 0;
-      runMochaRecursive(limit, mocha, num+1);
+      // await file to be written
+      runMochaRecursive(limit, mocha, num+1)
+
     });
   }
   else {

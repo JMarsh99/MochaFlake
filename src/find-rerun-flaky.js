@@ -33,7 +33,7 @@ module.exports = async function findRerunFlakies() {
 * file and title
 */
 async function getTestResults() {
-  let fileInfo = await waitForResults(testResultsPath, 1000);
+  let fileInfo = await waitForResults(testResultsPath, 5000);
   let testRuns = JSON.parse(fileInfo);
   let testResults = {};
   for (testRun of testRuns) {

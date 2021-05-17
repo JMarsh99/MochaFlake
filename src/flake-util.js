@@ -7,6 +7,7 @@ let fs = require('fs');
 /**
 * Promisified version of readFile which is simpler to call
 * Must be awaited!
+* Inspired by https://stackoverflow.com/questions/46867517/how-to-read-file-with-async-await-properly
 *
 * @param {String} filePath file path of file to be read
 * @return {String} fileInfo file contents in utf-8 format
@@ -21,7 +22,7 @@ let getFileInfo = exports.getFileInfo = async function getFileInfo(filePath) {
 /**
 * Promisified version of readdir which is simpler to call
 * Must be awaited!
-* This may only work on one level (no deeper directories)
+* Inspired by https://stackoverflow.com/questions/46867517/how-to-read-file-with-async-await-properly
 *
 * @param {String} dirPath directory path of files to get
 * @return {Array} dirInfo array of each file in the directory
@@ -50,7 +51,14 @@ exports.waitForResults = async function waitForResults(filePath, timeout) {
     let fileInfo = await getFileInfo(filePath);
     // timeout function
     // reject if timeout reached
-    var timer = setTimeout(function () {
+    var timer = setTimeout(async function () {
+      if (fileInfo == "" || fileInfo == "{}") {
+        fileInfo = await getFileInfo(filePath);
+        timer = setTimeout(function () {
+          watcher.close();
+          resolve(fileInfo);
+        }, timeout);
+      }
       watcher.close();
       resolve(fileInfo);
     }, timeout);

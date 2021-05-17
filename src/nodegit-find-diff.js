@@ -8,7 +8,7 @@ let nodegit = require('nodegit'),
 // file patch info class
 // stores file path and headers
 // can return modified code line ranges
-FilePatchInfo = require('./FilePatchInfo');
+let FilePatchInfo = require('./FilePatchInfo');
 
 /**
 * get the all FilePatchInfo objects from working directory
@@ -23,7 +23,7 @@ module.exports = async function findNodeDiff(options) {
     if (options['useCurrentWorkingTree']) {
       patchInfo = await getPatchInfo(pathToRepo);
     } else {
-      patchInfo = await getPatchInfoForCommits(pathToRepo);
+      patchInfo = await getPatchInfoForCommits(pathToRepo, options['branchName']);
     }
     return patchInfo;
   } catch(error) {
@@ -78,16 +78,14 @@ function getPatchInfo(pathToRepo) {
 *
 * @param {String} pathToRepo path to the repo being tested
 */
-async function getPatchInfoForCommits(pathToRepo) {
+async function getPatchInfoForCommits(pathToRepo, branch) {
   return new Promise((resolve, reject) => {
     nodegitKit.open(pathToRepo)
     .then(repo => {
       // Note: branch defaults to master as documented in nodegit-kit
       // This was phased out as in this article:
       // https://www.bbc.co.uk/news/technology-53050955
-      // I've set it to use 'main' here
-      // maybe add an option for which branch to use?
-      return nodegitKit.log(repo, { sort: 'reverse', branch: 'main' })
+      return nodegitKit.log(repo, { sort: 'reverse', branch: branch })
         .then(history => {
             var commit1 = history[0].commit;
             var commit2 = history[1].commit;

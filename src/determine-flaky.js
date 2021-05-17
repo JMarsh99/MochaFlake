@@ -39,9 +39,7 @@ module.exports = async function markFlakies(fileOverlapInfo, options) {
 async function determineFlakyTests(overlapInfo) {
   // we need to wait for the results from Mocha to finish
   // before we retrieve that information
-  // timeout set to 10 mins but some projects probably need longer
-  // TODO: add user option for timeout?
-  let fileInfoJSON = await waitForResults('../results/testResults.json', 1000);
+  let fileInfoJSON = await waitForResults('../results/testResults.json', 5000);
   // turn into js object
   let fileInfo = "";
   try {
@@ -51,7 +49,7 @@ async function determineFlakyTests(overlapInfo) {
     // add a retry so that it gets the info correctly
     console.log("Missed file info, retrying...");
     // add extra time (2sec) so that it's close to guaranteed to hit
-    fileInfoJSON = await waitForResults('../results/testResults.json', 2000);
+    fileInfoJSON = await waitForResults('../results/testResults.json', 7000);
     fileInfo = JSON.parse(fileInfoJSON);
   }
   // since it's the only run, just get the first value

@@ -12,7 +12,7 @@ let fs = require('fs'),
 
 let resultsPath = '../results/traceResults.txt';
 
-let {getFileInfo, getFilesInDirectory} = require('./flake-util.js');
+let {getFileInfo, getFilesInDirectory, waitForResults} = require('./flake-util.js');
 /**
 * Get the run trace ranges for each file covered by each test
 * First, split transform file into individual tests
@@ -25,9 +25,7 @@ let {getFileInfo, getFilesInDirectory} = require('./flake-util.js');
 * @return {Object} traceRanges range of lines covered for each file for each test
 */
 module.exports = async function findRunTrace(options) {
-  // This has to be sync! bad design!
-  // Might need to add locks onto file so that file is only read when complete :/
-  let fileData = await waitForNoChanges(resultsPath, 600000);
+  let fileData = await waitForResults(resultsPath, 5000);
   let tracesLists = transformToTraceLists(fileData);
   let tracesList = tracesLists[0];
   let titleList = tracesLists[1];
@@ -234,46 +232,4 @@ function getRanges(array) {
     ranges.push(rstart == rend ? rstart+'' : rstart + '-' + rend);
   }
   return ranges;
-}
-
-/**
-* Wait for the trace information to be available
-* by watching for the testingended file line
-* @param {String} filePath path to file to watch for
-* @param {Integer} timeout timeout before giving up on retrieving the values
-* @return fileInfo full file content
-*/
-async function waitForNoChanges(filePath, timeout) {
-  return new Promise(async function (resolve, reject) {
-    // timeout function
-    // reject if timeout reached
-    var timer = setTimeout(function () {
-      watcher.close();
-      reject(new Error('Timeout for testResults.json reached'));
-    }, timeout);
-
-    let fileInfo;
-
-    // watcher function, fire callback if file changed
-    let watcher = fs.watch(filePath, async function(eventType, filename) {
-      fileInfo = await getFileInfo(filePath);
-      let split = fileInfo.split('\n');
-      let last = split[split.length-1];
-      if (last == "testingended") {
-        clearTimeout(timer);
-        watcher.close();
-        resolve(fileInfo);
-      }
-    });
-
-    // Get the info if it's there already
-    fileInfo = await getFileInfo(filePath);
-    let split = fileInfo.split('\n');
-    let last = split[split.length-1];
-    if (last == "testingended") {
-      clearTimeout(timer);
-      watcher.close();
-      resolve(fileInfo);
-    }
-  });
 }
